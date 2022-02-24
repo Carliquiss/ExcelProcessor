@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created to ease the process of processing Excel files.
+Created for make the process of processing excel files easier.
 
 @author: Carlos
 """
@@ -59,7 +59,7 @@ class ExcelFolder:
     # Print all the files with some problem so they can't be processed
     def PrintBadFiles(self): 
         for file in self.badFiles:
-            print(f"[X] Bad file: {file}")
+            print(f"\n[X] Bad file: {file}")
 
 
 class XlsFile:
@@ -77,6 +77,8 @@ class XlsFile:
             try: 
                 self.excelWorkbook = xlrd.open_workbook(self.fileName)
                 self.workingSheet = self.excelWorkbook.sheet_by_index(sheetNumber)
+                self.rowsNumber= self.GetNumberOfRows()
+                self.columnsNumber = self.GetNumberOfColumns()
                 
             except xlrd.biffh.XLRDError: 
                 print(f"[X] - ERROR file not supported: {self.fileName}")
@@ -88,7 +90,7 @@ class XlsFile:
     # Method: Printer
     # Specify the way that an object of this class is printed whith print clausule
     def __str__(self):
-        return f"Filename - {self.fileName}"
+        return f"\nFilename - {self.fileName}\n\tColumns: {self.columnsNumber}\n\tRows: {self.rowsNumber}"
 
 
     # Method: Instancer?
@@ -97,12 +99,55 @@ class XlsFile:
         return f"XlsFile - {self.fileName}"
     
     
-    
+    # Method: GetNumberOfRows
+    # Get number of rows from the Excel sheet
     def GetNumberOfRows(self): 
-        pass
+        return self.workingSheet.nrows
+    
+
+    # Method: GetNumberOfColumns
+    # Get number of columns from the Excel sheet
+    def GetNumberOfColumns(self): 
+        return self.workingSheet.ncols
+    
+
+    # Method: GetColumnData
+    # Get all the data from a colum starting in the row startRow until the row "endRow"
+    # (by defaultall the values of the column are returned)
+    def GetColumnData(self, columNumber, startRow = 0, endRow = None):
+        self.workingSheet.col_values(columNumber, start_rowx=startRow, end_rowx=endRow)
         
-    def GetNumberOfColumnss(self): 
-        pass
+
+    # Method: GetRowData
+    # Get all the data from a row starting in the row startRow until the row "endRow"
+    # (by defaultall the values of the column are returned)
+    def GetRowData(self, rowNumber, startCol = 0, endCol = None):
+        self.workingSheet.row_values(rowNumber, start_colx=startCol, end_colx=endCol)
+    
+
+    # Method: GetAllDataByColumns
+    # Get all the data from all the columns. This method return an array of arrays.
+    # In each position of the array it's a whole column
+    def GetAllDataByColumns(self):
+        columnsData = []
+        
+        for column in range(self.GetNumberOfColumns()):
+            columnsData.append(self.GetColumnData(column))
+            
+        return columnsData
+            
+            
+    # Method: GetAllDataByRows
+    # Get all the data from all the rows. This method return an array of arrays.
+    # In each position of the array it's a whole row
+    def GetAllDataByRows(self):
+        rowsData = []
+        
+        for row in range(self.GetNumberOfRows()):
+            rowsData.append(self.GetRowData(row))
+            
+        return rowsData
+    
     
     # Method: changeWorkSheet
     # Change the current worksheet to work with
@@ -115,14 +160,12 @@ class XlsFile:
             raise Exception("To change the working sheet you must provide a valid one (starting in 0)")
     
 
+
 ##################### TESTING PART #####################
 
 test = ExcelFolder()
-print('-' * 20)
 test.PrintGoodFiles()
-print('-' * 20)
 test.PrintBadFiles()
-
 
 
 
