@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created for make the process of processing excel files easier.
+Created to ease the process of processing Excel files.
 
 @author: Carlos
 """
@@ -115,11 +115,14 @@ class XlsFile:
             raise Exception("To change the working sheet you must provide a valid one (starting in 0)")
     
 
+##################### TESTING PART #####################
+
 test = ExcelFolder()
 print('-' * 20)
 test.PrintGoodFiles()
 print('-' * 20)
 test.PrintBadFiles()
+
 
 
 
