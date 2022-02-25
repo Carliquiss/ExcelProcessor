@@ -55,6 +55,7 @@ class ExcelFolder:
         for file in self.xlsFiles:
             print(file)
     
+    
     # Method: PrintBadFiles
     # Print all the files with some problem so they can't be processed
     def PrintBadFiles(self): 
