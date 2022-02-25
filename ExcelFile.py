@@ -116,23 +116,27 @@ class XlsFile:
     # Get all the data from a colum starting in the row startRow until the row "endRow"
     # (by defaultall the values of the column are returned)
     def GetColumnData(self, columNumber, startRow = 0, endRow = None):
-        self.workingSheet.col_values(columNumber, start_rowx=startRow, end_rowx=endRow)
+        return self.workingSheet.col_values(columNumber, start_rowx=startRow, end_rowx=endRow)
         
 
     # Method: GetRowData
     # Get all the data from a row starting in the row startRow until the row "endRow"
     # (by defaultall the values of the column are returned)
     def GetRowData(self, rowNumber, startCol = 0, endCol = None):
-        self.workingSheet.row_values(rowNumber, start_colx=startCol, end_colx=endCol)
+        return self.workingSheet.row_values(rowNumber, start_colx=startCol, end_colx=endCol)
     
 
     # Method: GetAllDataByColumns
     # Get all the data from all the columns. This method return an array of arrays.
     # In each position of the array it's a whole column
-    def GetAllDataByColumns(self):
+    def GetAllDataByColumns(self, startColumn=0, stopColumn=None):
+        
         columnsData = []
         
-        for column in range(self.GetNumberOfColumns()):
+        if stopColumn == None: 
+            stopColumn = self.GetNumberOfColumns()
+            
+        for column in range(startColumn, stopColumn):
             columnsData.append(self.GetColumnData(column))
             
         return columnsData
@@ -141,10 +145,14 @@ class XlsFile:
     # Method: GetAllDataByRows
     # Get all the data from all the rows. This method return an array of arrays.
     # In each position of the array it's a whole row
-    def GetAllDataByRows(self):
+    def GetAllDataByRows(self, startRow=0, stopRow=None):
+        
         rowsData = []
         
-        for row in range(self.GetNumberOfRows()):
+        if stopRow == None: 
+            stopRow = self.GetNumberOfRows()
+        
+        for row in range(startRow, stopRow):
             rowsData.append(self.GetRowData(row))
             
         return rowsData
@@ -164,9 +172,15 @@ class XlsFile:
 
 ##################### TESTING PART #####################
 
-test = ExcelFolder()
-test.PrintGoodFiles()
-test.PrintBadFiles()
+AllFiles = ExcelFolder("../Stuff")
+# test.PrintGoodFiles()
+# test.PrintBadFiles()
+
+print(AllFiles.xlsFiles[1])
+print(AllFiles.xlsFiles[1].GetRowData(0)) # Headers of the file
+print(AllFiles.xlsFiles[1].GetColumnData(0))
+print(AllFiles.xlsFiles[1].GetAllDataByRows(0,2))
+print(AllFiles.xlsFiles[1].GetAllDataByColumns(0,2))
 
 
 
