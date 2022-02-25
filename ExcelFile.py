@@ -7,11 +7,11 @@ Created to ease the process of processing Excel files.
 
 import os
 import xlrd
-
+import openpyxl 
 
 class ExcelFolder:
     # Class to represent a bunch of excel files in a folder. Those files
-    # will be processed as desire using also the Excel File class
+    # will be processed as desire using also the ExcelFile class
 
 
     # Method: Constructor
@@ -22,7 +22,7 @@ class ExcelFolder:
         
         if type(folderPath) == str and os.path.exists(folderPath): # Folder must be str and exists
             self.folderPath = folderPath
-            self.xlsFiles, self.badFiles = self.GetXlsFilesFromFolder()
+            self.excelFiles, self.badFiles = self.GetXlsFilesFromFolder()
             
         else: 
             raise Exception("Path value must be valid")
@@ -33,26 +33,32 @@ class ExcelFolder:
     def GetXlsFilesFromFolder(self): 
         
         folder = os.listdir(self.folderPath)
-        pathXlsFiles=[]
+        pathExcelFiles=[]
         pathXlsBadFiles=[]
 
         for file in folder:        
 
-            if file.split('.')[1]== 'xls': # If the file has the XLS extension mark it as found
+            if file.split('.')[1]== 'xls' or file.split('.')[1]== 'xlsx': # If the file has the XLS or XLSX extension mark it as found
                 try: 
-                    pathXlsFiles.append(XlsFile(f"{self.folderPath}/{file}"))
+                    pathExcelFiles.append(XlsFile(f"{self.folderPath}/{file}"))
                 
                 except Exception: 
-                    print(f"[i] - Skipping file: {file}")
-                    pathXlsBadFiles.append(f"{self.folderPath}/{file}")
+                    try: 
+                        pass 
+                        pathExcelFiles.append(XlsFile(f"{self.folderPath}/{file}"))
+                    ##### TBD xlsx files
                     
-        return list(pathXlsFiles), list(pathXlsBadFiles)
+                    except: 
+                        print(f"[i] - Skipping file: {file}")
+                        pathXlsBadFiles.append(f"{self.folderPath}/{file}")
+                    
+        return list(pathExcelFiles), list(pathXlsBadFiles)
       
     
     # Method: PrintFiles
     # Print all the files which we are working with
     def PrintGoodFiles(self): 
-        for file in self.xlsFiles:
+        for file in self.excelFiles:
             print(file)
     
     
@@ -115,20 +121,20 @@ class XlsFile:
     # Method: GetColumnData
     # Get all the data from a colum starting in the row startRow until the row "endRow"
     # (by defaultall the values of the column are returned)
-    def GetColumnData(self, columNumber, startRow = 0, endRow = None):
+    def GetColumnData(self, columNumber, startRow=0, endRow=None):
         return self.workingSheet.col_values(columNumber, start_rowx=startRow, end_rowx=endRow)
         
 
     # Method: GetRowData
     # Get all the data from a row starting in the row startRow until the row "endRow"
     # (by defaultall the values of the column are returned)
-    def GetRowData(self, rowNumber, startCol = 0, endCol = None):
+    def GetRowData(self, rowNumber, startCol=0, endCol=None):
         return self.workingSheet.row_values(rowNumber, start_colx=startCol, end_colx=endCol)
     
 
     # Method: GetAllDataByColumns
-    # Get all the data from all the columns. This method return an array of arrays.
-    # In each position of the array it's a whole column
+    # Get all the data from the columns specified from startCol to stopColumn. 
+    # This method return an array of arrays. In each position of the array it's a whole column
     def GetAllDataByColumns(self, startColumn=0, stopColumn=None):
         
         columnsData = []
@@ -143,8 +149,8 @@ class XlsFile:
             
             
     # Method: GetAllDataByRows
-    # Get all the data from all the rows. This method return an array of arrays.
-    # In each position of the array it's a whole row
+    # Get all the data from the rows specified from startRow to stopRow. 
+    # This method return an array of arrays. In each position of the array it's a whole row
     def GetAllDataByRows(self, startRow=0, stopRow=None):
         
         rowsData = []
@@ -160,28 +166,48 @@ class XlsFile:
     
     # Method: changeWorkSheet
     # Change the current worksheet to work with
-    def changeWorkingSheet(self, sheetNumber):
-        
-        if type(sheetNumber) == int: 
-            self.workingSheet = self.excelWorkbook.sheet_by_index(sheetNumber)
+    def ChangeWorkingSheet(self, sheetNumber):
+        try: 
+            self.workingSheet = (self.excelWorkbook).sheet_by_index(sheetNumber)
             
-        else: 
-            raise Exception("To change the working sheet you must provide a valid one (starting in 0)")
-    
+        except Exception: 
+            raise Exception("ERROR ERROR when trying to change the working sheet. " +
+                            "To change the working sheet you must provide a valid index (starting in 0)")
+
 
 
 ##################### TESTING PART #####################
 
 AllFiles = ExcelFolder("../Stuff")
-# test.PrintGoodFiles()
-# test.PrintBadFiles()
+SingleFile = XlsFile("../Stuff/testSheets.xls")
 
-print(AllFiles.xlsFiles[1])
-print(AllFiles.xlsFiles[1].GetRowData(0)) # Headers of the file
-print(AllFiles.xlsFiles[1].GetColumnData(0))
-print(AllFiles.xlsFiles[1].GetAllDataByRows(0,2))
-print(AllFiles.xlsFiles[1].GetAllDataByColumns(0,2))
+###### General info ######
+# AllFiles.PrintGoodFiles() # Print the files found in the folder that can be processed
+# AllFiles.PrintBadFiles()  # Print the files found in the folder that can NOT be processed
 
+
+###### Basic function ######
+# AllFiles
+# print(AllFiles.excelFiles[1]) # Print info about the file in position 1
+# print(AllFiles.excelFiles[1].GetRowData(0)) # Headers of the file
+# print(AllFiles.excelFiles[1].GetColumnData(0)) # First Column of the file
+# print(AllFiles.excelFiles[1].GetAllDataByRows(0,2)) # First 2 rows (0 and 1)
+# print(AllFiles.excelFiles[1].GetAllDataByColumns(0,2)) # First 2 columns (0 and 1)
+
+# SingleFile
+# print(SingleFile) # Print info about the file in position 1
+# print(SingleFile.GetRowData(0)) # Headers of the file
+# print(SingleFile.GetColumnData(0)) # First Column of the file
+# print(SingleFile.GetAllDataByRows(0,2)) # First 2 rows (0 and 1)
+# print(SingleFile.GetAllDataByColumns(0,2)) # First 2 columns (0 and 1)
+
+
+###### Sheets ######
+# Sample of changing the sheet of a file
+# print(AllFiles.excelFiles[2]) # Print info about the file in position 3
+# print(AllFiles.excelFiles[2].GetRowData(0)) # Headers of the first sheet
+# AllFiles.excelFiles[2].ChangeWorkingSheet(1)
+# print(AllFiles.excelFiles[2].GetRowData(0)) # Headers of the second sheet
 
 
 
