@@ -7,7 +7,11 @@ Created to ease the process of processing Excel files.
 
 import os
 import xlrd
-import openpyxl 
+import openpyxl
+import warnings
+
+warnings.simplefilter("ignore")
+
 
 class ExcelFolder:
     # Class to represent a bunch of excel files in a folder. Those files
@@ -16,45 +20,76 @@ class ExcelFolder:
 
     # Method: Constructor
     # Specify the path to a folder where the Excel files are. 
-    # By default is the path where the script is
-    
+    # By default is the path where the script is    
     def __init__(self, folderPath=os.path.abspath(os.path.dirname(__file__))):     
         
         if type(folderPath) == str and os.path.exists(folderPath): # Folder must be str and exists
+        
             self.folderPath = folderPath
-            self.excelFiles, self.badFiles = self.GetXlsFilesFromFolder()
-            
+            self.excelFiles, self.badFiles = self.GetExcelFilesFromFolder()
+
         else: 
             raise Exception("Path value must be valid")
-    
-    
+
+
     # Method: GetFilesFromFolder
     # Get all the XLS files in the path
-    def GetXlsFilesFromFolder(self): 
+    def GetExcelFilesFromFolder(self): 
         
         folder = os.listdir(self.folderPath)
         pathExcelFiles=[]
         pathXlsBadFiles=[]
-
+        valid_extensions = ['xls', 'xlsx', 'csv']
+        
         for file in folder:        
-
-            if file.split('.')[1]== 'xls' or file.split('.')[1]== 'xlsx': # If the file has the XLS or XLSX extension mark it as found
-                try: 
-                    pathExcelFiles.append(XlsFile(f"{self.folderPath}/{file}"))
+            try: 
+                extension = file.split('.')[1]
                 
-                except Exception: 
-                    try: 
-                        pass 
-                        pathExcelFiles.append(XlsFile(f"{self.folderPath}/{file}"))
-                    ##### TBD xlsx files
+                if extension in valid_extensions:
+                    try:
+                        pathExcelFiles.append(self.GetExcelFile(f"{self.folderPath}/{file}"))
                     
-                    except: 
-                        print(f"[i] - Skipping file: {file}")
+                    except Exception:
                         pathXlsBadFiles.append(f"{self.folderPath}/{file}")
+                        
+            except IndexError: # To handle if there are files with no extension
+                pass
+
+                
+                            
                     
         return list(pathExcelFiles), list(pathXlsBadFiles)
-      
+
+
+    # Method: GetExcelFile
+    # Try to open the files with the xls and xlsx method
+    def GetExcelFile(self, filePath): 
+        try: 
+            return XlsFile(filePath)
+        
+        except Exception: 
+            
+            try: 
+                return XlsxFile(filePath)
+            
+            except Exception: 
+                raise Exception (f"[X] ERROR - File {filePath} not supported") 
+                
+
     
+    def ConvertToXls(self, filePath, fileName):
+        try: 
+            newName = fileName.split('.')[0] + ".xls"
+            
+            fileToConvert = pandas.read_csv(filePath)
+            fileConverted = fileToConvert.to_excel(filePath + newName)
+            
+            return newName
+        
+        except: 
+            raise Exception (f"[X] ERROR - File {fileName} could not be converted to {newName}") 
+            
+
     # Method: PrintFiles
     # Print all the files which we are working with
     def PrintGoodFiles(self): 
@@ -80,16 +115,10 @@ class XlsFile:
         
         if os.path.isfile(filePath): 
             self.fileName = filePath
-            
-            try: 
-                self.excelWorkbook = xlrd.open_workbook(self.fileName)
-                self.workingSheet = self.excelWorkbook.sheet_by_index(sheetNumber)
-                self.rowsNumber= self.GetNumberOfRows()
-                self.columnsNumber = self.GetNumberOfColumns()
-                
-            except xlrd.biffh.XLRDError: 
-                print(f"[X] - ERROR file not supported: {self.fileName}")
-                raise xlrd.biffh.XLRDError
+            self.excelWorkbook = xlrd.open_workbook(self.fileName)
+            self.workingSheet = self.excelWorkbook.sheet_by_index(sheetNumber)
+            self.rowsNumber= self.GetNumberOfRows()
+            self.columnsNumber = self.GetNumberOfColumns()
                 
         else: 
             raise Exception("File must exists and has to be provided to the constructor")
@@ -122,6 +151,10 @@ class XlsFile:
     # Get all the data from a colum starting in the row startRow until the row "endRow"
     # (by defaultall the values of the column are returned)
     def GetColumnData(self, columNumber, startRow=0, endRow=None):
+        
+        if endRow == None: 
+            endRow = self.rowsNumber
+            
         return self.workingSheet.col_values(columNumber, start_rowx=startRow, end_rowx=endRow)
         
 
@@ -129,8 +162,127 @@ class XlsFile:
     # Get all the data from a row starting in the row startRow until the row "endRow"
     # (by defaultall the values of the column are returned)
     def GetRowData(self, rowNumber, startCol=0, endCol=None):
+        
+        if endCol == None: 
+            endCol = self.columnsNumber
+            
         return self.workingSheet.row_values(rowNumber, start_colx=startCol, end_colx=endCol)
     
+
+    # Method: GetAllDataByColumns
+    # Get all the data from the columns specified from startCol to stopColumn. 
+    # This method return an array of arrays. In each position of the array it's a whole column
+    def GetAllDataByColumns(self, startColumn=0, stopColumn=None):
+        
+        columnsData = []
+        
+        if stopColumn == None: 
+            stopColumn = self.columnsNumber
+            
+        for column in range(startColumn, stopColumn):
+            columnsData.append(self.GetColumnData(column))
+            
+        return columnsData
+            
+            
+    # Method: GetAllDataByRows
+    # Get all the data from the rows specified from startRow to stopRow. 
+    # This method return an array of arrays. In each position of the array it's a whole row
+    def GetAllDataByRows(self, startRow=0, stopRow=None):
+        
+        rowsData = []
+        
+        if stopRow == None: 
+            stopRow = self.rowsNumber
+        
+        for row in range(startRow, stopRow):
+            rowsData.append(self.GetRowData(row))
+            
+        return rowsData
+    
+    
+    # Method: changeWorkSheet
+    # Change the current worksheet to work with
+    def ChangeWorkingSheet(self, sheetNumber):
+        try: 
+            self.workingSheet = (self.excelWorkbook).sheet_by_index(sheetNumber)
+            
+        except Exception: 
+            raise Exception("ERROR ERROR when trying to change the working sheet. " +
+                            "To change the working sheet you must provide a valid index (starting in 0)")
+
+
+
+
+class XlsxFile:
+    # Class to represent a single XLSX file with its data
+
+
+    # Method: Constructor
+    # Specify the XLSX file path to work with and the sheet number (starting in 0) 
+    # By default the excel file will work with the first sheet.
+    def __init__(self, filePath, sheetNumber=0):
+        
+        if os.path.isfile(filePath): 
+            self.fileName = filePath
+            self.excelWorkbook = openpyxl.load_workbook(filename=self.fileName, data_only=True)#, read_only=True)
+            self.workingSheet = self.excelWorkbook.worksheets[sheetNumber]
+            self.rowsNumber= self.GetNumberOfRows()
+            self.columnsNumber = self.GetNumberOfColumns()
+            
+        else: 
+            raise Exception("File must exists and has to be provided to the constructor")
+    
+    # Method: Printer
+    # Specify the way that an object of this class is printed whith print clausule
+    def __str__(self):
+        return f"\nFilename - {self.fileName}\n\tColumns: {self.columnsNumber}\n\tRows: {self.rowsNumber}"
+
+
+    # Method: Instancer?
+    # Change how to display info when using the type() clausule
+    def __repr__(self):
+        return f"XlsxFile - {self.fileName}"
+    
+    
+    # Method: GetNumberOfRows
+    # Get number of rows from the Excel sheet
+    def GetNumberOfRows(self): 
+        return self.workingSheet.max_row
+    
+
+    # Method: GetNumberOfColumns
+    # Get number of columns from the Excel sheet
+    def GetNumberOfColumns(self): 
+        return self.workingSheet.max_column
+    
+
+    # Method: GetColumnData
+    # Get all the data from a colum starting in the row startRow until the row "endRow"
+    # (by defaultall the values of the column are returned)
+    def GetColumnData(self, columNumber, startRow=0, endRow=None):
+        
+        columNumber += 1 #Adjusting:  xlrd begins in 0 while openpyxl begins in 1
+        if endRow == None: 
+            endRow = self.rowsNumber
+            
+        rowData = list(self.workingSheet.iter_cols(min_col=columNumber, max_col=columNumber, min_row=startRow, max_row=endRow, values_only=True))[0]
+        return list(rowData)
+
+        
+
+    # Method: GetRowData
+    # Get all the data from a row starting in the column startCol until the column "endCol"
+    # (by defaultall the values of the column are returned)
+    def GetRowData(self, rowNumber, startCol=0, endCol=None):
+        
+        rowNumber += 1 #Adjusting:  xlrd begins in 0 while openpyxl begins in 1
+        if endCol == None: 
+            endCol = self.columnsNumber
+            
+        rowData = list(self.workingSheet.iter_rows(min_row=rowNumber, max_row=rowNumber, min_col=startCol, max_col=endCol, values_only=True))[0]
+        return list(rowData)
+
 
     # Method: GetAllDataByColumns
     # Get all the data from the columns specified from startCol to stopColumn. 
@@ -168,51 +320,11 @@ class XlsFile:
     # Change the current worksheet to work with
     def ChangeWorkingSheet(self, sheetNumber):
         try: 
-            self.workingSheet = (self.excelWorkbook).sheet_by_index(sheetNumber)
+            self.workingSheet = self.excelWorkbook.worksheets[sheetNumber]
             
         except Exception: 
             raise Exception("ERROR ERROR when trying to change the working sheet. " +
                             "To change the working sheet you must provide a valid index (starting in 0)")
-
-
-
-##################### TESTING PART #####################
-
-AllFiles = ExcelFolder("../Stuff")
-SingleFile = XlsFile("../Stuff/testSheets.xls")
-
-###### General info ######
-# AllFiles.PrintGoodFiles() # Print the files found in the folder that can be processed
-# AllFiles.PrintBadFiles()  # Print the files found in the folder that can NOT be processed
-
-
-###### Basic function ######
-# AllFiles
-# print(AllFiles.excelFiles[1]) # Print info about the file in position 1
-# print(AllFiles.excelFiles[1].GetRowData(0)) # Headers of the file
-# print(AllFiles.excelFiles[1].GetColumnData(0)) # First Column of the file
-# print(AllFiles.excelFiles[1].GetAllDataByRows(0,2)) # First 2 rows (0 and 1)
-# print(AllFiles.excelFiles[1].GetAllDataByColumns(0,2)) # First 2 columns (0 and 1)
-
-# SingleFile
-# print(SingleFile) # Print info about the file in position 1
-# print(SingleFile.GetRowData(0)) # Headers of the file
-# print(SingleFile.GetColumnData(0)) # First Column of the file
-# print(SingleFile.GetAllDataByRows(0,2)) # First 2 rows (0 and 1)
-# print(SingleFile.GetAllDataByColumns(0,2)) # First 2 columns (0 and 1)
-
-
-###### Sheets ######
-# Sample of changing the sheet of a file
-# print(AllFiles.excelFiles[2]) # Print info about the file in position 3
-# print(AllFiles.excelFiles[2].GetRowData(0)) # Headers of the first sheet
-# AllFiles.excelFiles[2].ChangeWorkingSheet(1)
-# print(AllFiles.excelFiles[2].GetRowData(0)) # Headers of the second sheet
-
-
-
-
-
 
 
 
