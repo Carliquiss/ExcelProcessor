@@ -74,21 +74,7 @@ class ExcelFolder:
             
             except Exception: 
                 raise Exception (f"[X] ERROR - File {filePath} not supported") 
-                
-
-    
-    def ConvertToXls(self, filePath, fileName):
-        try: 
-            newName = fileName.split('.')[0] + ".xls"
-            
-            fileToConvert = pandas.read_csv(filePath)
-            fileConverted = fileToConvert.to_excel(filePath + newName)
-            
-            return newName
-        
-        except: 
-            raise Exception (f"[X] ERROR - File {fileName} could not be converted to {newName}") 
-            
+                            
 
     # Method: PrintFiles
     # Print all the files which we are working with
