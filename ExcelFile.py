@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created to ease the process of processing Excel files.
+Created to ease processing Excel files.
 
 @author: Carlos
 """
