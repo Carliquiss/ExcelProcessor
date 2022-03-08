@@ -1,9 +1,11 @@
 # ExcelProcessor
 Python library to work with Excel. Intended primarily for scientific analysis
 
-
-# ⚠ Work in progress. Suggestions welcome. 
-
+# File extensions: 
 - .xls files: ✓
 - .xlsx files: ✓
-- .csv files: In progress
+- .csv files: ✓
+
+# ⚠ Testing in progress. Suggestions welcome. 
+
+
