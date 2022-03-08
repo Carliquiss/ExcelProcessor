@@ -6,6 +6,7 @@ Created to ease the process of processing Excel files.
 """
 
 import os
+import csv
 import xlrd
 import openpyxl
 import warnings
@@ -88,6 +89,7 @@ class ExcelFolder:
     def PrintBadFiles(self): 
         for file in self.badFiles:
             print(f"\n[X] Bad file: {file}")
+
 
 
 class XlsFile:
@@ -194,9 +196,8 @@ class XlsFile:
             self.workingSheet = (self.excelWorkbook).sheet_by_index(sheetNumber)
             
         except Exception: 
-            raise Exception("ERROR ERROR when trying to change the working sheet. " +
+            raise Exception("ERROR when trying to change the working sheet. " +
                             "To change the working sheet you must provide a valid index (starting in 0)")
-
 
 
 
@@ -309,11 +310,125 @@ class XlsxFile:
             self.workingSheet = self.excelWorkbook.worksheets[sheetNumber]
             
         except Exception: 
-            raise Exception("ERROR ERROR when trying to change the working sheet. " +
+            raise Exception("ERROR when trying to change the working sheet. " +
                             "To change the working sheet you must provide a valid index (starting in 0)")
 
 
 
 
+class CsvFile:
+    # Class to represent a single XLSX file with its data
+
+
+    # Method: Constructor
+    # Specify the XLSX file path to work with and the sheet number (starting in 0) 
+    # By default the excel file will work with the first sheet.
+    def __init__(self, filePath, userDelimiter=','):
+        
+        if os.path.isfile(filePath): 
+            self.fileName = filePath
+            self.excelWorkbook = None
+            self.workingSheet = None
+            self.columnDelimiter = userDelimiter
+            self.columnsNumber, self.rowsNumber, self.rowsData = self.GetNumberOfColumnsAndRows()            
+            
+        else: 
+            raise Exception("File must exists and has to be provided to the constructor")
+
+
+    # Method: Printer
+    # Specify the way that an object of this class is printed whith print clausule
+    def __str__(self):
+        return f"\nFilename - {self.fileName}\n\tColumns: {self.columnsNumber}\n\tRows: {self.rowsNumber}"
+
+
+    # Method: Instancer?
+    # Change how to display info when using the type() clausule
+    def __repr__(self):
+        return f"CsvFile - {self.fileName}"
+    
+    
+    # Method: GetNumberOfRows
+    # Get number of rows from the Excel sheet
+    def GetNumberOfColumnsAndRows(self): 
+        
+        with open(self.fileName, 'r') as file:
+            self.workingSheet = csv.reader(file, delimiter=self.columnDelimiter)
+    
+            numberColumns = 0
+            numberRows = 0
+            rowsData =[]
+            
+            for row in self.workingSheet: 
+                if len(row) > numberColumns: numberColumns = len(row)
+                numberRows += 1
+                rowsData.append(row)
+                
+        return numberColumns, numberRows, rowsData
+
+ 
+    # Method: GetColumnData
+    # Get all the data from a colum starting in the row startRow until the row "endRow"
+    # (by defaultall the values of the column are returned)
+    def GetColumnData(self, columnNumber, startRow=0, endRow=None):
+        
+        if endRow == None: 
+            endRow = self.rowsNumber
+    
+        columnData = []            
+        for row in self.rowsData:
+            columnData.append(row[columnNumber])
+            
+        return columnData
+
+        
+
+    # Method: GetRowData
+    # Get all the data from a row starting in the column startCol until the column "endCol"
+    # (by defaultall the values of the column are returned)
+    def GetRowData(self, rowNumber, startCol=0, endCol=None):
+        
+        if endCol == None: 
+            endCol = self.columnsNumber
+            
+        return self.rowsData[rowNumber][startCol:endCol]
+
+
+    # Method: GetAllDataByColumns
+    # Get all the data from the columns specified from startCol to stopColumn. 
+    # This method return an array of arrays. In each position of the array it's a whole column
+    def GetAllDataByColumns(self, startColumn=0, stopColumn=None):
+        
+        columnsData = []
+        
+        if stopColumn == None: 
+            stopColumn = self.GetNumberOfColumns()
+            
+        for column in range(startColumn, stopColumn):
+            columnsData.append(self.GetColumnData(column))
+            
+        return columnsData
+            
+            
+    # Method: GetAllDataByRows
+    # Get all the data from the rows specified from startRow to stopRow. 
+    # This method return an array of arrays. In each position of the array it's a whole row
+    def GetAllDataByRows(self, startRow=0, stopRow=None):
+        
+        rowsData = []
+        
+        if stopRow == None: 
+            stopRow = self.GetNumberOfRows()
+        
+        for row in range(startRow, stopRow):
+            rowsData.append(self.GetRowData(row))
+            
+        return rowsData
+    
+    
+    # Method: changeWorkSheet
+    # Change the current worksheet to work with
+    def ChangeWorkingSheet(self, sheetNumber):
+        raise Exception("ERROR - CSV files has no sheets'")
 
 
