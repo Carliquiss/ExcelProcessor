@@ -16,7 +16,7 @@ warnings.simplefilter("ignore")
 
 class ExcelFolder:
     # Class to represent a bunch of excel files in a folder. Those files
-    # will be processed as desire using also the ExcelFile class
+    # will be processed as desire using the XlsFile, XlsxFile or CsvFile classes
 
 
     # Method: Constructor
@@ -68,13 +68,18 @@ class ExcelFolder:
         try: 
             return XlsFile(filePath)
         
-        except Exception: 
+        except: 
             
             try: 
                 return XlsxFile(filePath)
             
-            except Exception: 
-                raise Exception (f"[X] ERROR - File {filePath} not supported") 
+            except: 
+                
+                try: 
+                    return CsvFile(filePath)
+                
+                except: 
+                    raise Exception (f"[X] ERROR - File {filePath} not supported") 
                             
 
     # Method: PrintFiles
