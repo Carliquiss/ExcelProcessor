@@ -21,7 +21,7 @@ Python library to work with Excel files (.CSV, .XLS and .XLSX). Intended for sci
 The main use of the script is divided into 2 options:
 
 - Read a folder with **multiple** files 
-- Read a **single** file. 
+- Read a **single** file.
 
 <details>
     <summary>
