@@ -22,11 +22,12 @@ class ExcelFolder:
     # Method: Constructor
     # Specify the path to a folder where the Excel files are. 
     # By default is the path where the script is    
-    def __init__(self, folderPath=os.path.abspath(os.path.dirname(__file__))):     
+    def __init__(self, folderPath=os.path.abspath(os.path.dirname(__file__)), csvDelimiter = ','):     
         
         if type(folderPath) == str and os.path.exists(folderPath): # Folder must be str and exists
-        
+            
             self.folderPath = folderPath
+            self.csvDelimiter = csvDelimiter
             self.excelFiles, self.badFiles = self.GetExcelFilesFromFolder()
 
         else: 
@@ -76,7 +77,7 @@ class ExcelFolder:
             except: 
                 
                 try: 
-                    return CsvFile(filePath)
+                    return CsvFile(filePath, userDelimiter=self.csvDelimiter)
                 
                 except: 
                     raise Exception (f"[X] ERROR - File {filePath} not supported") 
