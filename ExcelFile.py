@@ -57,9 +57,6 @@ class ExcelFolder:
             except IndexError: # To handle if there are files with no extension
                 pass
 
-                
-                            
-                    
         return list(pathExcelFiles), list(pathXlsBadFiles)
 
 
