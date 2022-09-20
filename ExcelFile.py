@@ -360,7 +360,7 @@ class CsvFile:
     
             numberColumns = 0
             numberRows = 0
-            rowsData =[]
+            rowsData = []
             
             for row in self.workingSheet: 
                 if len(row) > numberColumns: numberColumns = len(row)
@@ -380,7 +380,12 @@ class CsvFile:
     
         columnData = []            
         for row in self.rowsData:
-            columnData.append(row[columnNumber])
+            
+            if row:  
+                columnData.append(row[columnNumber])
+            
+            else: 
+                columnData.append(row)
             
         return columnData
 
